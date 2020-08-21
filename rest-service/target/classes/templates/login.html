@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+    <head>
+        <title>Spring Security Example </title>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    </head>
+    <body>
+        <div th:if="${param.error}">
+            Invalid username and password.
+        </div>
+        <div th:if="${param.logout}">
+            You have been logged out.
+        </div>
+        <form id="loginForm" method="post" style="visibility: visible;">
+            <div><label> Username : <input type="text" id= "username" name="username"/> </label></div>
+            <div><label> Password: <input type="password" id="password" name="password"/> </label></div>
+            <div><input id="login-submit" type="submit" value="Sign In"/></div>
+        </form>
+        <div class="container" id="table-container" style="visibility: hidden;">
+        	<button id="test">GET</button>
+        	<div class="table-responsive">
+	        	<table class="table table-bordered table-striped" id="user-table">
+	        		<tr>
+	        			<th>Name</th>
+	        			<th>Last Name</th>
+	        		</tr>
+	        	</table>
+			</div>
+        </div>
+        <script>
+        	var token;
+        	
+		    (function($){
+		        function processForm( e ){
+		        	$.ajax({
+		        	    url: '/login',
+		        	    dataType: 'html',
+		        	    type: 'post',
+		        	    contentType: 'application/json',
+		        	    data: JSON.stringify( { "username": $('#username').val(), "password": $('#password').val() } ),
+		        	    processData: false,
+		        	    success: function( data, textStatus, request ){
+		        	        $('#response pre').html( JSON.stringify( data ) );
+		        	        token = request.getResponseHeader("Authorization");
+		        	        document.getElementById("loginForm").style.visibility="hidden";
+		        	        document.getElementById("table-container").style.visibility="visible";
+		        	    },
+		        	    error: function( jqXhr, textStatus, errorThrown ){
+		        	        console.log( errorThrown );
+		        	    }
+		        	});
+		
+		            e.preventDefault();
+		        }
+		
+		        $('#loginForm').submit( processForm );
+		    })(jQuery);
+		    
+		    $(document).ready(function(){
+		    	$("#test").click(function(){
+				    $.ajax({
+				        beforeSend: function(request) {
+				            request.setRequestHeader("Authorization", token);
+				        },
+				        dataType: "json",
+				        url: "/user/getall",
+				        success: function(data) {
+				        	var user_data = "";
+				        	$.each(data, function(key, value){
+				        		user_data += "<tr>";
+				        		user_data += "<td>"+value.firstName+"</td>";
+				        		user_data += "<td>"+value.lastName+"</td>";
+				        		user_data += "</tr>";
+				        	});
+				        	$("#user-table td").remove();
+				        	$("#user-table").append(user_data);
+				        }
+				    });
+			    });
+		    });
+		    
+		</script>
+    </body>
+</html>
